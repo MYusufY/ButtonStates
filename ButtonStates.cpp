@@ -4,14 +4,26 @@
 ButtonSwitch::ButtonSwitch(int pin) {
     _pin = pin;
 
-    // setup the button
+    // setup the button as pulled high
     pinMode(pin, INPUT_PULLUP);
 
-    // reset all variables
+    // reset all internal variables
     _history = 255;
     _clicks = 0;
     _timeRelease = 0;
     _timePress = 0;
+
+    // reset counters
+    singleClicks = 0;
+    doubleClicks = 0;
+    longClicks = 0;
+
+    // reset single click flip flop
+    flipflop = 0b0;
+}
+
+void ButtonSwitch::fliptheflop(){
+    flipflop ^= 1;
 }
 
 // Function detecting and debouncing just one click.
@@ -24,6 +36,9 @@ uint8_t ButtonSwitch::triggerSingle(){
 
     if ((_history & 0b11110100) == 0b11110000){ 
         _history = 0b00000000;
+
+        singleClicks++;
+        flipflop ^= 1;
         return SINGLECLICK;
     }
 
@@ -50,12 +65,17 @@ uint8_t ButtonSwitch::triggerDouble(){
     if ((_clicks == 1) && ((_timeNow-_timePress) > 300)){ 
       _clicks = 0;
       _timePress = 0;
+
+      singleClicks++;
+      flipflop ^= 1;
       return SINGLECLICK;
     }
     
     if ((_clicks == 2) && ((_timeNow-_timePress) < 300)){ 
       _clicks = 0;
       _timePress = 0;
+
+      doubleClicks++;
       return DOUBLECLICK;
     }
     
@@ -89,18 +109,25 @@ uint8_t ButtonSwitch::triggerLong(){
         _clicks = 0;
         _timePress = 0;
         _timeRelease = 0;
+
+        longClicks++;
         return LONGCLICK;
     }
 
     if ((_clicks == 1) && ((_timeNow-_timePress) > 300)){
       _clicks = 0;
       _timePress = 0;
+
+      singleClicks++;
+      flipflop ^= 1;
       return SINGLECLICK;
     }
     
     if ((_clicks == 2) && ((_timeNow-_timePress) < 300)){ 
       _clicks = 0;
       _timePress = 0;
+
+      doubleClicks++;
       return DOUBLECLICK;
     }
     
