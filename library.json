@@ -1,0 +1,27 @@
+{
+  "name": "ButtonStates",
+  "version": "1.0.0",
+  "description": "A library to debounce button clicks and differentiate between single, double and long clicks",
+  "keywords": "debouncer, clicks",
+  "repository":
+  {
+    "type": "git",
+    "url": "https://github.com/harry-finch/buttonstates.git"
+  },
+  "authors":
+  [
+    {
+      "name": "Stéphane Muller",
+      "email": "stephane@fabnhack.net",
+      "url": "https://fabnhack.net",
+      "maintainer": true
+    }
+  ],
+  "license": "MIT",
+  "homepage": "https://fabnhack.net/",
+  "dependencies": {
+    "ownername/print": "~1.0.0"
+  },
+  "frameworks": "arduino",
+  "platforms": "*"
+}
