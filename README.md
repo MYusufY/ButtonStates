@@ -1,4 +1,4 @@
-# buttonstates by master_mugen
+# ButtonStates by master_mugen
 An Arduino library for handling button actions and debouncing. 
 
 Instantiate a button:
