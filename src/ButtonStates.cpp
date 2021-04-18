@@ -1,7 +1,7 @@
 #include <Arduino.h>
 #include <ButtonStates.h>
 
-ButtonSwitch::ButtonSwitch(int pin) {
+ButtonStates::ButtonStates(int pin) {
     _pin = pin;
 
     // setup the button as pulled high
@@ -22,7 +22,7 @@ ButtonSwitch::ButtonSwitch(int pin) {
     flipflop = 0b0;
 }
 
-void ButtonSwitch::fliptheflop(){
+void ButtonStates::fliptheflop(){
     flipflop ^= 1;
 }
 
@@ -30,7 +30,7 @@ void ButtonSwitch::fliptheflop(){
 // Debouncing is done by storing the pin's change over time,
 // and then checking the history against a mask, thus ignoring the bounces
 
-uint8_t ButtonSwitch::triggerSingle(){
+uint8_t ButtonStates::triggerSingle(){
     _history = _history << 1;
     _history |= digitalRead(_pin); 
 
@@ -49,7 +49,7 @@ uint8_t ButtonSwitch::triggerSingle(){
 // Double clicks are detected by comparing times between clicks.
 // The time between 2 clicks needs to be less than 300ms.
 
-uint8_t ButtonSwitch::triggerDouble(){
+uint8_t ButtonStates::triggerDouble(){
     _timeNow = millis();
 
     _history = _history << 1; 
@@ -86,7 +86,7 @@ uint8_t ButtonSwitch::triggerDouble(){
 // Long clicks are identified by comparing press and release times.
 // This time we have to use history and mask to detect press and release.
 
-uint8_t ButtonSwitch::triggerLong(){
+uint8_t ButtonStates::triggerLong(){
     _timeNow = millis();
 
     _history = _history << 1;
