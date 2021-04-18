@@ -5,9 +5,9 @@
 #define DOUBLECLICK 2
 #define LONGCLICK 3
 
-class ButtonSwitch {
+class ButtonStates {
     public:
-        ButtonSwitch(int pin);
+        ButtonStates(int pin);
 
         // Function returning debounced single clicks
         uint8_t triggerSingle();
