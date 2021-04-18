@@ -1,9 +1,9 @@
 # buttonstates by master_mugen
-An Arduino library for handling button actions and debouncing.
+An Arduino library for handling button actions and debouncing. 
 
 Instantiate a button:
 ```cpp
-ButtonSwitch button(2);
+ButtonStates button(2);
 ```
 
 Read that button's actions depending on what you need:
@@ -20,12 +20,12 @@ int nbDoubleClicks = button.doubleClicks;
 int nbLongClicks = button.longClicks;
 ```
 
-Get the flipflop value of a switch:
+The initial state of a button is 0 and when the library registers a click, the state becomes 1. The variable flipflop helps you track the state of the button (if required). To get the flipflop value of a switch and use it to toggle a LED for example:
 ```cpp
 digitalWrite(LED, button.flipflop);
 ```
 
-Flip the flipflop value manually (to make a n-way flipflop switch):
+You can also flip the flipflop value manually (to make a n-way flipflop switch):
 ```cpp
 button.fliptheflop();
 ```
