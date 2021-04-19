@@ -6,7 +6,7 @@ Instantiate a button:
 ButtonStates button(2); // 2 being the pin number
 ```
 
-Read that button's actions depending on what you need:
+Read that button's actions depending on what you need. These functions need to be called in the main loop to be effective.
 ```cpp
 int userAction = button.triggerSingle(); // detects single clicks (returns 1)
 int userAction = button.triggerDouble(); // detects single and double clicks (returns 2)
@@ -20,9 +20,10 @@ int nbDoubleClicks = button.doubleClicks;
 int nbLongClicks   = button.longClicks;
 ```
 
-The initial state of a button is 0 and when the library registers a click, the state becomes 1. The variable flipflop helps you track the state of the button (if required). To get the flipflop value of a switch and use it to toggle a LED for example:
+The initial value of this variable is 0. When the library registers a click, the value becomes 1. When the button is triggered again, the value reverts to 0. Just like a flipflop. This variable can help you track the state of the button for example. You could also use it to toggle a LED:
 ```cpp
-digitalWrite(LED, button.flipflop);
+int state = button.flipflop; // returns 1 or 0
+digitalWrite(LED, state);
 ```
 
 You can also flip the flipflop value manually (to make a n-way flipflop switch):
