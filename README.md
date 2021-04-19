@@ -8,9 +8,9 @@ ButtonStates button(2);
 
 Read that button's actions depending on what you need:
 ```cpp
-int userAction = button.triggerSingle(); // detects single clicks
-int userAction = button.triggerDouble(); // detects single and double clicks
-int userAction = button.triggerLong();   // detects single, double and long clicks
+int userAction = button.triggerSingle(); // detects single clicks (returns 1)
+int userAction = button.triggerDouble(); // detects single and double clicks (returns 2)
+int userAction = button.triggerLong();   // detects single, double and long clicks (returns 3)
 ```
 
 Get the number of clicks:
