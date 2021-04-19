@@ -3,7 +3,7 @@ An Arduino library for handling button actions and debouncing.
 
 Instantiate a button:
 ```cpp
-ButtonStates button(2);
+ButtonStates button(2); // 2 being the pin number
 ```
 
 Read that button's actions depending on what you need:
@@ -17,7 +17,7 @@ Get the number of clicks:
 ```cpp
 int nbSingleClicks = button.singleClicks;
 int nbDoubleClicks = button.doubleClicks;
-int nbLongClicks = button.longClicks;
+int nbLongClicks   = button.longClicks;
 ```
 
 The initial state of a button is 0 and when the library registers a click, the state becomes 1. The variable flipflop helps you track the state of the button (if required). To get the flipflop value of a switch and use it to toggle a LED for example:
