@@ -1,6 +1,7 @@
 # ButtonStates by master_mugen
 An Arduino library for handling button actions and debouncing. 
-The button needs to be wired to ground. The library declares the pin with an INPUT_PULLUP.
+
+PREREQUISITES: The button needs to be wired to ground. The library declares the pin with an INPUT_PULLUP.
 
 Instantiate a button:
 ```cpp
