@@ -2,8 +2,8 @@
 #include <ButtonStates.h>
 
 // Instantiate buttons
-ButtonSwitch buttonOne(2);
-ButtonSwitch buttonTwo(3);
+ButtonStates buttonOne(2);
+ButtonStates buttonTwo(3);
 
 #define LED 4
 
