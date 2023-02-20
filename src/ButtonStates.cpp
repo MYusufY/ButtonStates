@@ -28,7 +28,7 @@ void ButtonStates::fliptheflop(){
 
 // Function detecting and debouncing just one click.
 // Debouncing is done by storing the pin's change over time,
-// and then checking the history against a mask, thus ignoring the bounces
+// and then checking the history against a mask, thus ignoring the bounces.
 
 uint8_t ButtonStates::triggerSingle(){
     _history = _history << 1;
