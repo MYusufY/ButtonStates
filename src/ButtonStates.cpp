@@ -1,135 +1,185 @@
 #include <Arduino.h>
 #include <ButtonStates.h>
 
+// ==================
+// Constants & Macros
+// ==================
+
+// Debounce patterns: Adjust these masks and values to match your button release/press patterns.
+const uint8_t DEBOUNCE_PATTERN_MASK_PRESS   = 0b11110100;
+const uint8_t DEBOUNCE_PATTERN_STABLE_PRESS = 0b11110000;
+
+const uint8_t DEBOUNCE_PATTERN_MASK_RELEASE = 0b00101111;
+const uint8_t DEBOUNCE_PATTERN_STABLE_REL   = 0b00001111;
+
+const uint8_t NOCLICK       = 0;
+const uint8_t SINGLECLICK   = 1;
+const uint8_t DOUBLECLICK   = 2;
+const uint8_t LONGCLICK     = 3;
+
+
+// ==================
+// Constructor
+// ==================
 ButtonStates::ButtonStates(int pin) {
     _pin = pin;
+    
+    // Setup the button with internal pull-up resistor.
+    pinMode(_pin, INPUT_PULLUP);
 
-    // setup the button as pulled high
-    pinMode(pin, INPUT_PULLUP);
+    // Initialize internal variables
+    _history              = 0xFF;  // Start with all '1's: button is not pressed initially
+    _clicks               = 0;
+    _timeRelease          = 0;
+    _timePress            = 0;
 
-    // reset all internal variables
-    _history = 255;
-    _clicks = 0;
-    _timeRelease = 0;
-    _timePress = 0;
+    // Counters
+    singleClicks          = 0;
+    doubleClicks          = 0;
+    longClicks            = 0;
 
-    // reset counters
-    singleClicks = 0;
-    doubleClicks = 0;
-    longClicks = 0;
+    // Flip-flop
+    flipflop              = 0b0;
 
-    // reset single click flip flop
-    flipflop = 0b0;
+    // Default thresholds (in milliseconds)
+    _doubleClickThreshold = 300;
+    _longClickThreshold   = 300;
 }
 
-void ButtonStates::fliptheflop(){
+// ==================
+// Public Methods
+// ==================
+
+void ButtonStates::fliptheflop() {
     flipflop ^= 1;
 }
 
-// Function detecting and debouncing just one click.
-// Debouncing is done by storing the pin's change over time,
-// and then checking the history against a mask, thus ignoring the bounces.
+// Allows adjusting thresholds at runtime
+void ButtonStates::setThresholds(uint16_t doubleClick, uint16_t longClick) {
+    _doubleClickThreshold = doubleClick;
+    _longClickThreshold   = longClick;
+}
 
-uint8_t ButtonStates::triggerSingle(){
-    _history = _history << 1;
-    _history |= digitalRead(_pin); 
-
-    if ((_history & 0b11110100) == 0b11110000){ 
+// -------------------
+// triggerSingle()
+// Detects single clicks using debouncing.
+// -------------------
+uint8_t ButtonStates::triggerSingle() {
+    updateHistory();
+    if (isStablePress()) {
+        // Reset history so we're ready for next cycle
         _history = 0b00000000;
 
         singleClicks++;
-        flipflop ^= 1;
+        fliptheflop();
+        return SINGLECLICK;
+    }
+    return NOCLICK;
+}
+
+// -------------------
+// triggerDouble()
+// Detects single and double clicks using timing checks.
+// -------------------
+uint8_t ButtonStates::triggerDouble() {
+    uint32_t currentTime = millis();
+    updateHistory();
+
+    if (isStablePress()) {
+        _history = 0b00000000;
+        _clicks++;
+        _timePress = currentTime;
+    }
+
+    // If one click detected and no second click within threshold => single click
+    if ((_clicks == 1) && ((currentTime - _timePress) > _doubleClickThreshold)) {
+        resetClickState();
+
+        singleClicks++;
+        fliptheflop();
         return SINGLECLICK;
     }
 
+    // If two clicks detected within threshold => double click
+    if ((_clicks == 2) && ((currentTime - _timePress) < _doubleClickThreshold)) {
+        resetClickState();
+
+        doubleClicks++;
+        return DOUBLECLICK;
+    }
+
     return NOCLICK;
 }
 
-// Function detecting and debouncing single and double clicks.
-// Double clicks are detected by comparing times between clicks.
-// The time between 2 clicks needs to be less than 300ms.
+// -------------------
+// triggerLong()
+// Detects single, double, and long clicks.
+// -------------------
+uint8_t ButtonStates::triggerLong() {
+    uint32_t currentTime = millis();
+    updateHistory();
 
-uint8_t ButtonStates::triggerDouble(){
-    _timeNow = millis();
-
-    _history = _history << 1; 
-    _history |= digitalRead(_pin);
-    
-    if ((_history & 0b11110100) == 0b11110000){
+    // Check for press event
+    if (isStablePress()) {
         _history = 0b00000000;
-
-        _clicks++;
-        _timePress = millis();
+        _timePress = currentTime;
     }
 
-    if ((_clicks == 1) && ((_timeNow-_timePress) > 300)){ 
-      _clicks = 0;
-      _timePress = 0;
-
-      singleClicks++;
-      flipflop ^= 1;
-      return SINGLECLICK;
-    }
-    
-    if ((_clicks == 2) && ((_timeNow-_timePress) < 300)){ 
-      _clicks = 0;
-      _timePress = 0;
-
-      doubleClicks++;
-      return DOUBLECLICK;
-    }
-    
-    return NOCLICK;
-}
-
-// Function detecting and debouncing, single, double and long clicks.
-// Long clicks are identified by comparing press and release times.
-// This time we have to use history and mask to detect press and release.
-
-uint8_t ButtonStates::triggerLong(){
-    _timeNow = millis();
-
-    _history = _history << 1;
-    _history |= digitalRead(_pin);
-    
-    if ((_history & 0b11110100) == 0b11110000){ 
-        _history = 0b00000000;
-
-        _timePress = millis();
-    }
-
-    if ((_history & 0b00101111) == 0b00001111){ 
-        _history = 0b11111111;
-
-        _timeRelease = millis();
+    // Check for release event
+    if (isStableRelease()) {
+        _history = 0xFF; // Reset history to "all released"
+        _timeRelease = currentTime;
         _clicks++;
     }
 
-    if ((_clicks == 1) && (_timeRelease > _timePress) && ((_timeRelease-_timePress) > 300)){
-        _clicks = 0;
-        _timePress = 0;
-        _timeRelease = 0;
-
+    // Long click: If release detected and duration > long click threshold
+    if ((_clicks == 1) && (_timeRelease > _timePress) && ((_timeRelease - _timePress) > _longClickThreshold)) {
+        resetClickState();
         longClicks++;
         return LONGCLICK;
     }
 
-    if ((_clicks == 1) && ((_timeNow-_timePress) > 300)){
-      _clicks = 0;
-      _timePress = 0;
-
-      singleClicks++;
-      flipflop ^= 1;
-      return SINGLECLICK;
+    // Single click: If only one press and no second click within long click threshold
+    if ((_clicks == 1) && ((currentTime - _timePress) > _longClickThreshold)) {
+        resetClickState();
+        singleClicks++;
+        fliptheflop();
+        return SINGLECLICK;
     }
-    
-    if ((_clicks == 2) && ((_timeNow-_timePress) < 300)){ 
-      _clicks = 0;
-      _timePress = 0;
 
-      doubleClicks++;
-      return DOUBLECLICK;
+    // Double click: If two presses occurred within double click threshold
+    if ((_clicks == 2) && ((currentTime - _timePress) < _doubleClickThreshold)) {
+        resetClickState();
+        doubleClicks++;
+        return DOUBLECLICK;
     }
-    
+
     return NOCLICK;
+}
+
+// ==================
+// Private Methods
+// ==================
+
+// Update the history register with the current button state.
+void ButtonStates::updateHistory() {
+    _history <<= 1;
+    _history |= digitalRead(_pin);
+}
+
+// Check if a stable button press is detected after debouncing.
+bool ButtonStates::isStablePress() {
+    return ((_history & DEBOUNCE_PATTERN_MASK_PRESS) == DEBOUNCE_PATTERN_STABLE_PRESS);
+}
+
+// Check if a stable button release is detected after debouncing.
+bool ButtonStates::isStableRelease() {
+    return ((_history & DEBOUNCE_PATTERN_MASK_RELEASE) == DEBOUNCE_PATTERN_STABLE_REL);
+}
+
+// Reset internal click tracking variables
+void ButtonStates::resetClickState() {
+    _clicks = 0;
+    _timePress = 0;
+    _timeRelease = 0;
 }
